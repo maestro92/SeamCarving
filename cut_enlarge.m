@@ -1,4 +1,4 @@
-function [mask, bestpaths] = cut_enlarge(errpatch, k)
+function [mask, bestpaths, seam] = cut_enlarge(errpatch)
 % mask = cut(errpatch)
 %
 % Computes the minimum cut path from the left to right side of the patch
@@ -32,17 +32,19 @@ cost = cost(2:end-1, :);
 
 % create the mask based on the best path
 mask = zeros(size(path));
+seam = zeros(size(path));
 bestpaths = zeros(1, size(path, 2));
 [mv, bestpaths(end)] = min(cost(:, end)); 
 mask(1:bestpaths(end), end) = 1;
 for x = numel(bestpaths):-1:2
+    
     bestpaths(x-1) = path(bestpaths(x), x);
     mask(1:bestpaths(x-1), x-1) = 1;
+    if(bestpaths(x-1)>0)
+        seam(bestpaths(x-1), x-1) = 1;
+    end
 end
 
-for i = 1:k
-    
-    
-end
+% figure, imagesc(seam), axis image;
 mask = ~mask;
 
