@@ -4,13 +4,13 @@ close all;
 
 DO_SHRINK = true;
 DO_ENLARGE = false;
-TARGET_WIDTH = 716;
-TARGET_HEIGHT = 537;
+TARGET_WIDTH = 304;
+TARGET_HEIGHT = 456;
 
 image_path = 'images/';
 addpath(image_path);
 
-img1_name = 'image6.jpg';
+img1_name = 'louvre.jpg';
 img1 = im2double(imread(img1_name));
 figure, imagesc(img1), axis image;
 
@@ -19,97 +19,116 @@ if DO_SHRINK
     num_rows_to_shrink = size(img1, 1) - TARGET_HEIGHT;
     num_cols_to_shrink = size(img1, 2) - TARGET_WIDTH;
     
-    %table that stores the error cost each step of the way
-    T = zeros(num_rows_to_shrink + 1, num_cols_to_shrink + 1);
-    
-    %populate first row of T. ie shrinking only columns
-    cur_img = imrotate(img1, 90);
-    for i = 1 : num_cols_to_shrink
-        [cur_img, cost] = shrink_one_row(cur_img);
-        
-        T(1, i + 1) = cost + T(1, i);
-    end
-
-    %populate the rest of T
-    cur_img = img1;
-    for i = 2 : num_rows_to_shrink + 1
-        
-        [cur_img, cost] = shrink_one_row(cur_img);
-        
-        T(i, 1) = cost + T(i - 1, 1);
-        
-        new_img = imrotate(cur_img, 90);
-        for j = 2 : num_cols_to_shrink + 1
-            [new_img, cost] = shrink_one_row(new_img);
-
-            T(i, j) = cost + min([T(i, j - 1), T(i - 1, j)]);
-        end
-    end
-    
-    %route is a matrix telling us whether to remove row or column seam each
-    %step of the way
-    route = uint8(zeros(num_rows_to_shrink + 1, num_cols_to_shrink + 1));
-    current_row = num_rows_to_shrink + 1;
-    current_col = num_cols_to_shrink + 1;
-    for i = 1 : num_rows_to_shrink + num_cols_to_shrink
-
-        if T(current_row - 1, current_col) < T(current_row, current_col - 1)
-            %shrinking by row has less error cost
-            current_row = current_row - 1;
-            
-            if current_row == 1
-                route(1, 1 : current_col) = 1;
-                break;
-            end
-        else
-            %shrinking by col has less error cost
-            current_col = current_col - 1;
-            
-            if current_col == 1
-                route(1 : current_row, 1) = 1;
-                break;
-            end
-        end
-        
-        route(current_row, current_col) = 1;
-    end
-    
-    %based on route, shrink image according to the optimal order
-    current_row = 1;
-    current_col = 1;
-    new_img = img1;
-    for i = 1 : num_rows_to_shrink + num_cols_to_shrink
-        if route(current_row + 1, current_col) == 1
-            %optimal to shrink row
+    if num_rows_to_shrink == 0
+        %shrinking only columns
+        new_img = imrotate(img1, 90);
+        for i = 1 : num_cols_to_shrink
             [new_img, ~] = shrink_one_row(new_img);
+        end
+        new_img = imrotate(new_img, -90);
+    
+    elseif num_cols_to_shrink == 0
+        %shrinking only rows
+        new_img = img1;
+        for i = 1 : num_rows_to_shrink
+            [new_img, ~] = shrink_one_row(new_img);
+        end
+        
+    else
+        %shrinking both rows and columns
             
-            current_row = current_row + 1;
-            
-            if current_row == num_rows_to_shrink + 1
-                %everything else to shrink is along col
+        %table that stores the error cost each step of the way
+        T = zeros(num_rows_to_shrink + 1, num_cols_to_shrink + 1);
+
+        %populate first row of T. ie shrinking only columns
+        cur_img = imrotate(img1, 90);
+        for i = 1 : num_cols_to_shrink
+            [cur_img, cost] = shrink_one_row(cur_img);
+
+            T(1, i + 1) = cost + T(1, i);
+        end
+
+        %populate the rest of T
+        cur_img = img1;
+        for i = 2 : num_rows_to_shrink + 1
+
+            [cur_img, cost] = shrink_one_row(cur_img);
+
+            T(i, 1) = cost + T(i - 1, 1);
+
+            new_img = imrotate(cur_img, 90);
+            for j = 2 : num_cols_to_shrink + 1
+                [new_img, cost] = shrink_one_row(new_img);
+
+                T(i, j) = cost + min([T(i, j - 1), T(i - 1, j)]);
+            end
+        end
+
+        %route is a matrix telling us whether to remove row or column seam each
+        %step of the way
+        route = uint8(zeros(num_rows_to_shrink + 1, num_cols_to_shrink + 1));
+        current_row = num_rows_to_shrink + 1;
+        current_col = num_cols_to_shrink + 1;
+        for i = 1 : num_rows_to_shrink + num_cols_to_shrink
+
+            if T(current_row - 1, current_col) < T(current_row, current_col - 1)
+                %shrinking by row has less error cost
+                current_row = current_row - 1;
+
+                if current_row == 1
+                    route(1, 1 : current_col) = 1;
+                    break;
+                end
+            else
+                %shrinking by col has less error cost
+                current_col = current_col - 1;
+
+                if current_col == 1
+                    route(1 : current_row, 1) = 1;
+                    break;
+                end
+            end
+
+            route(current_row, current_col) = 1;
+        end
+
+        %based on route, shrink image according to the optimal order
+        current_row = 1;
+        current_col = 1;
+        new_img = img1;
+        for i = 1 : num_rows_to_shrink + num_cols_to_shrink
+            if route(current_row + 1, current_col) == 1
+                %optimal to shrink row
+                [new_img, ~] = shrink_one_row(new_img);
+
+                current_row = current_row + 1;
+
+                if current_row == num_rows_to_shrink + 1
+                    %everything else to shrink is along col
+                    new_img = imrotate(new_img, 90);
+                    for j = current_col : num_cols_to_shrink + 1
+                        [new_img, ~] = shrink_one_row(new_img);
+                    end
+                    new_img = imrotate(new_img, -90);
+
+                    break;
+                end
+            else
+                %optimal to shrink col
                 new_img = imrotate(new_img, 90);
-                for j = current_col : num_cols_to_shrink + 1
-                    [new_img, ~] = shrink_one_row(new_img);
-                end
+                [new_img, ~] = shrink_one_row(new_img);
                 new_img = imrotate(new_img, -90);
-                
-                break;
-            end
-        else
-            %optimal to shrink col
-            new_img = imrotate(new_img, 90);
-            [new_img, ~] = shrink_one_row(new_img);
-            new_img = imrotate(new_img, -90);
-            
-            current_col = current_col + 1;
-            
-            if current_col == num_cols_to_shrink + 1
-                %everything else to shrink is along row
-                for j = current_row : num_rows_to_shrink + 1
-                    [new_img, ~] = shrink_one_row(new_img);
+
+                current_col = current_col + 1;
+
+                if current_col == num_cols_to_shrink + 1
+                    %everything else to shrink is along row
+                    for j = current_row : num_rows_to_shrink + 1
+                        [new_img, ~] = shrink_one_row(new_img);
+                    end
+
+                    break;
                 end
-                
-                break;
             end
         end
     end
