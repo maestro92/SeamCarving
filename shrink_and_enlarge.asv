@@ -15,7 +15,10 @@ img1 = im2double(imread(img1_name));
 figure, imagesc(img1), axis image;
 
 %% shrinking the image
-if DO_SHRINK     
+if DO_SHRINK 
+    img = img1;
+    new_img = 1;
+    
     num_rows_to_shrink = size(img1, 1) - TARGET_HEIGHT;
     num_cols_to_shrink = size(img1, 2) - TARGET_WIDTH;
     
@@ -104,10 +107,11 @@ if DO_SHRINK
             current_col = current_col + 1;
             
             if current_col == num_cols_to_shrink + 1
-                %everything else to shrink is along row
-                for j = current_row : num_rows_to_shrink + 1
+                %everything else to shrink is along rp                new_img = imrotate(new_img, 90);
+                for j = current_col : num_cols_to_shrink + 1
                     [new_img, ~] = shrink_one_row(new_img);
                 end
+                new_img = imrotate(new_img, -90);
                 
                 break;
             end
@@ -140,6 +144,7 @@ if DO_SHRINK
     %}
 
     figure, imagesc(new_img), axis image;
+    keyboard;
 end
 
 
