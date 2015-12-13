@@ -12,6 +12,10 @@ figure, imagesc(img), axis image;
 % scale it by a factor of 1.2
 new_img = imresize(img, 1.2);
 figure, imagesc(new_img), axis image;
+set(gca,'xtick',[])
+set(gca,'xticklabel',[])
+set(gca,'ytick',[])
+set(gca,'yticklabel',[])
 
 [nh, nw, c] = size(new_img);
 
@@ -48,6 +52,10 @@ for i = 1:iter
 end
 
 figure, imagesc(new_img), axis image;
+set(gca,'xtick',[])
+set(gca,'xticklabel',[])
+set(gca,'ytick',[])
+set(gca,'yticklabel',[])
 a = 1
 
 end

@@ -70,6 +70,21 @@ if DO_ENLARGE
         img_grad = img_grad .* (1-seam) + 10000 .* seam;    
     end
 
+    img_r_with_seam = img_r;
+    img_g_with_seam = img_g;
+    img_b_with_seam = img_b;
+    
+    img_r_with_seam(copy_count == 1) = 1;
+    img_g_with_seam(copy_count == 1) = 0;
+    img_b_with_seam(copy_count == 1) = 0;
+
+    img_with_seam = rgb_to_img(img_r_with_seam, img_g_with_seam, img_b_with_seam);
+    img_with_seam = imrotate(img_with_seam, -90);
+    figure, imagesc(img_with_seam), axis image;
+    set(gca,'xtick',[])
+    set(gca,'xticklabel',[])
+    set(gca,'ytick',[])
+    set(gca,'yticklabel',[])
 
     % assign the new enlarged image
     new_img_r = zeros(w+k, h);
